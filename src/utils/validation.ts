@@ -4,13 +4,7 @@ export const songSchema = z.object({
   title: z.string().min(1, '曲名を入力してください'),
   artist: z.string().min(1, 'アーティスト名を入力してください'),
   tags: z.array(z.string()),
-  proficiency: z.union([
-    z.literal(1),
-    z.literal(2),
-    z.literal(3),
-    z.literal(4),
-    z.literal(5),
-  ]),
+  proficiency: z.number().min(1).max(5),
   key: z.object({
     original: z.string(),
     adjustment: z.number().min(-6).max(6),

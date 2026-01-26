@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { SongForm, ScorePhotoUpload } from '../components/song'
 import { useSong, useSongs, useTags, useImageUpload } from '../hooks'
 import type { SongFormData } from '../utils/validation'
+import type { UpdateSongInput } from '../types'
 
 export function EditSongPage() {
   const { id } = useParams<{ id: string }>()
@@ -45,7 +46,11 @@ export function EditSongPage() {
   }
 
   const handleSubmit = async (data: SongFormData) => {
-    await updateSong(song.id, data)
+    const input: UpdateSongInput = {
+      ...data,
+      proficiency: data.proficiency as 1 | 2 | 3 | 4 | 5,
+    }
+    await updateSong(song.id, input)
     if (hasPendingChanges) {
       await savePhoto()
     }

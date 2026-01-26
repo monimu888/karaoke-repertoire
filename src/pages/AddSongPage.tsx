@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { SongForm } from '../components/song'
 import { useSongs, useTags } from '../hooks'
 import type { SongFormData } from '../utils/validation'
+import type { CreateSongInput } from '../types'
 
 export function AddSongPage() {
   const navigate = useNavigate()
@@ -9,7 +10,11 @@ export function AddSongPage() {
   const { tags } = useTags()
 
   const handleSubmit = async (data: SongFormData) => {
-    await addSong(data)
+    const input: CreateSongInput = {
+      ...data,
+      proficiency: data.proficiency as 1 | 2 | 3 | 4 | 5,
+    }
+    await addSong(input)
     navigate('/')
   }
 

@@ -7,7 +7,7 @@ import type { Tag } from '../../types'
 interface SongFormProps {
   defaultValues?: Partial<SongFormData>
   tags: Tag[]
-  onSubmit: (data: SongFormData) => void
+  onSubmit: (data: SongFormData) => void | Promise<void>
   onCancel: () => void
   submitLabel?: string
 }
@@ -99,7 +99,7 @@ export function SongForm({
           control={control}
           render={({ field }) => (
             <StarRating
-              value={field.value}
+              value={field.value as 1 | 2 | 3 | 4 | 5}
               onChange={field.onChange}
               size="lg"
             />
