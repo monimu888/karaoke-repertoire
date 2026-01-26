@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Layout } from './components/layout'
-import { HomePage } from './pages'
+import { HomePage, AddSongPage, SongDetailPage, EditSongPage } from './pages'
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -17,9 +17,9 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/add" element={<PlaceholderPage title="曲追加" />} />
-          <Route path="/song/:id" element={<PlaceholderPage title="曲詳細" />} />
-          <Route path="/song/:id/edit" element={<PlaceholderPage title="曲編集" />} />
+          <Route path="/add" element={<AddSongPage />} />
+          <Route path="/song/:id" element={<SongDetailPage />} />
+          <Route path="/song/:id/edit" element={<EditSongPage />} />
           <Route path="/tags" element={<PlaceholderPage title="タグ管理" />} />
         </Routes>
       </Layout>
