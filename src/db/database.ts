@@ -21,6 +21,12 @@ export class KaraokeDatabase extends Dexie {
       tags: 'id, name',
       photos: 'id'
     })
+
+    this.version(2).stores({
+      songs: 'id, title, artist, *tags, proficiency, highScore, createdAt, updatedAt',
+      tags: 'id, name',
+      photos: 'id'
+    })
   }
 }
 
