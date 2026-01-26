@@ -1,6 +1,7 @@
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Button, Input, StarRating, TagBadge } from '../common'
+import { Button, StarRating, TagBadge } from '../common'
+import { SongSearchInput } from './SongSearchInput'
 import { songSchema, type SongFormData, defaultSongValues } from '../../utils/validation'
 import type { Tag } from '../../types'
 
@@ -48,6 +49,8 @@ export function SongForm({
   })
 
   const selectedTags = watch('tags')
+  const title = watch('title')
+  const artist = watch('artist')
 
   const toggleTag = (tagId: string) => {
     if (selectedTags.includes(tagId)) {
@@ -59,18 +62,14 @@ export function SongForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <Input
-        label="曲名"
-        placeholder="例: 残酷な天使のテーゼ"
-        error={errors.title?.message}
-        {...register('title')}
-      />
-
-      <Input
-        label="アーティスト"
-        placeholder="例: 高橋洋子"
-        error={errors.artist?.message}
-        {...register('artist')}
+      <SongSearchInput
+        title={title}
+        artist={artist}
+        onTitleChange={(value) => setValue('title', value)}
+        onArtistChange={(value) => setValue('artist', value)}
+        onSelect={() => {}}
+        titleError={errors.title?.message}
+        artistError={errors.artist?.message}
       />
 
       <div>
