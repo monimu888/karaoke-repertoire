@@ -1,29 +1,49 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { SongForm, ScorePhotoUpload } from '../components/song'
-import { useSong, useSongs, useTags, useImageUpload } from '../hooks'
+import { useFirestoreSongs, useFirestoreSong, useFirestoreTags } from '../hooks'
+import { useAuthContext } from '../contexts/AuthContext'
+import { resizeImage, createObjectURL, revokeObjectURL } from '../utils/imageUtils'
 import type { SongFormData } from '../utils/validation'
 import type { UpdateSongInput } from '../types'
 
 export function EditSongPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { song, loading } = useSong(id)
-  const { updateSong } = useSongs()
-  const { tags } = useTags()
+  const { user } = useAuthContext()
+  const { song, loading } = useFirestoreSong(user?.uid, id)
+  const { updateSong, savePhoto, deletePhoto } = useFirestoreSongs(user?.uid)
+  const { tags } = useFirestoreTags(user?.uid)
 
-  const {
-    previewUrl,
-    loading: photoLoading,
-    error: photoError,
-    selectImage,
-    savePhoto,
-    deletePhoto,
-    clearPreview,
-    hasPendingChanges,
-  } = useImageUpload({
-    songId: song?.id,
-    existingPhotoId: song?.scorePhotoId,
-  })
+  const [previewUrl, setPreviewUrl] = useState<string | null>(song?.scorePhotoId || null)
+  const [pendingBlob, setPendingBlob] = useState<Blob | null>(null)
+  const [photoLoading, setPhotoLoading] = useState(false)
+  const [photoError, setPhotoError] = useState<string | null>(null)
+
+  const selectImage = async (file: File) => {
+    try {
+      setPhotoLoading(true)
+      setPhotoError(null)
+      const resizedBlob = await resizeImage(file)
+      setPendingBlob(resizedBlob)
+      if (previewUrl && !previewUrl.startsWith('http')) {
+        revokeObjectURL(previewUrl)
+      }
+      setPreviewUrl(createObjectURL(resizedBlob))
+    } catch {
+      setPhotoError('画像の処理に失敗しました')
+    } finally {
+      setPhotoLoading(false)
+    }
+  }
+
+  const clearPreview = () => {
+    if (previewUrl && !previewUrl.startsWith('http')) {
+      revokeObjectURL(previewUrl)
+    }
+    setPreviewUrl(null)
+    setPendingBlob(null)
+  }
 
   if (loading) {
     return (
@@ -51,15 +71,16 @@ export function EditSongPage() {
       proficiency: data.proficiency as 1 | 2 | 3 | 4 | 5,
     }
     await updateSong(song.id, input)
-    if (hasPendingChanges) {
-      await savePhoto()
+    if (pendingBlob) {
+      await savePhoto(song.id, pendingBlob)
     }
     navigate(`/song/${song.id}`)
   }
 
   const handleClearPhoto = async () => {
-    if (song.scorePhotoId && !hasPendingChanges) {
-      await deletePhoto()
+    if (song.scorePhotoId && !pendingBlob) {
+      await deletePhoto(song.id, song.scorePhotoId)
+      setPreviewUrl(null)
     } else {
       clearPreview()
     }

@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { SearchBar, TagFilter, SortSelect } from '../components/filter'
 import { SongList } from '../components/song'
-import { useSongs, useTags, useSearch } from '../hooks'
+import { useFirestoreSongs, useFirestoreTags, useSearch } from '../hooks'
+import { useAuthContext } from '../contexts/AuthContext'
 
 type SortKey = 'updatedAt' | 'title' | 'artist' | 'proficiency' | 'highScore'
 type SortOrder = 'asc' | 'desc'
 
 export function HomePage() {
-  const { songs, loading: songsLoading } = useSongs()
-  const { tags, loading: tagsLoading } = useTags()
+  const { user } = useAuthContext()
+  const { songs, loading: songsLoading } = useFirestoreSongs(user?.uid)
+  const { tags, loading: tagsLoading } = useFirestoreTags(user?.uid)
 
   const [query, setQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])

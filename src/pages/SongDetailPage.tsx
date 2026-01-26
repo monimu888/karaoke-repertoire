@@ -2,20 +2,20 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Edit2, Trash2, ArrowLeft } from 'lucide-react'
 import { Button, StarRating, TagBadge, ConfirmDialog } from '../components/common'
-import { useSong, useSongs, useTags, useImageUpload } from '../hooks'
+import { useFirestoreSongs, useFirestoreSong, useFirestoreTags } from '../hooks'
+import { useAuthContext } from '../contexts/AuthContext'
 
 export function SongDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { song, loading } = useSong(id)
-  const { deleteSong } = useSongs()
-  const { tags } = useTags()
+  const { user } = useAuthContext()
+  const { song, loading } = useFirestoreSong(user?.uid, id)
+  const { deleteSong } = useFirestoreSongs(user?.uid)
+  const { tags } = useFirestoreTags(user?.uid)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  const { previewUrl: photoUrl } = useImageUpload({
-    songId: song?.id,
-    existingPhotoId: song?.scorePhotoId,
-  })
+  // Photo is now stored as URL directly in scorePhotoId
+  const photoUrl = song?.scorePhotoId || null
 
   if (loading) {
     return (
@@ -42,7 +42,7 @@ export function SongDetailPage() {
   const songTags = tags.filter((tag) => song.tags.includes(tag.id))
 
   const handleDelete = async () => {
-    await deleteSong(song.id)
+    await deleteSong(song.id, song.scorePhotoId)
     navigate('/')
   }
 

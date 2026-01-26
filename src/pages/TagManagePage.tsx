@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Plus, Edit2, Trash2, Check, X } from 'lucide-react'
 import { Button, Input, ConfirmDialog } from '../components/common'
-import { useTags } from '../hooks'
+import { useFirestoreTags, useFirestoreSongs } from '../hooks'
+import { useAuthContext } from '../contexts/AuthContext'
 import type { Tag } from '../types'
 
 const PRESET_COLORS = [
@@ -10,7 +11,13 @@ const PRESET_COLORS = [
 ]
 
 export function TagManagePage() {
-  const { tags, addTag, updateTag, deleteTag, isTagUsed } = useTags()
+  const { user } = useAuthContext()
+  const { tags, addTag, updateTag, deleteTag } = useFirestoreTags(user?.uid)
+  const { songs } = useFirestoreSongs(user?.uid)
+
+  const isTagUsed = (tagId: string) => {
+    return songs.some((song) => song.tags.includes(tagId))
+  }
   const [isAdding, setIsAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
@@ -44,8 +51,8 @@ export function TagManagePage() {
     setNewName('')
   }
 
-  const handleDeleteClick = async (tag: Tag) => {
-    const used = await isTagUsed(tag.id)
+  const handleDeleteClick = (tag: Tag) => {
+    const used = isTagUsed(tag.id)
     if (used) {
       setDeleteWarning('このタグは曲に使用されています。削除すると曲からも削除されます。')
     } else {

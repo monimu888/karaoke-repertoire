@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SongForm, ScorePhotoUpload } from '../components/song'
-import { useSongs, useTags, useImageUpload } from '../hooks'
-import { songRepository } from '../db/songRepository'
+import { useFirestoreSongs, useFirestoreTags, useImageUpload } from '../hooks'
+import { useAuthContext } from '../contexts/AuthContext'
 import type { SongFormData } from '../utils/validation'
 import type { CreateSongInput } from '../types'
 
 export function AddSongPage() {
   const navigate = useNavigate()
-  const { addSong } = useSongs()
-  const { tags } = useTags()
+  const { user } = useAuthContext()
+  const { addSong, savePhoto } = useFirestoreSongs(user?.uid)
+  const { tags } = useFirestoreTags(user?.uid)
   const [error, setError] = useState<string | null>(null)
 
   const {
@@ -32,7 +33,7 @@ export function AddSongPage() {
 
       // 写真がある場合は保存
       if (pendingBlob && newSong) {
-        await songRepository.savePhoto(newSong.id, pendingBlob)
+        await savePhoto(newSong.id, pendingBlob)
       }
 
       navigate('/')
