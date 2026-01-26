@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { SongForm } from '../components/song'
-import { useSongs, useTags } from '../hooks'
+import { SongForm, ScorePhotoUpload } from '../components/song'
+import { useSongs, useTags, useImageUpload } from '../hooks'
+import { songRepository } from '../db/songRepository'
 import type { SongFormData } from '../utils/validation'
 import type { CreateSongInput } from '../types'
 
@@ -11,6 +12,15 @@ export function AddSongPage() {
   const { tags } = useTags()
   const [error, setError] = useState<string | null>(null)
 
+  const {
+    previewUrl,
+    pendingBlob,
+    loading: photoLoading,
+    error: photoError,
+    selectImage,
+    clearPreview,
+  } = useImageUpload()
+
   const handleSubmit = async (data: SongFormData) => {
     try {
       setError(null)
@@ -18,7 +28,13 @@ export function AddSongPage() {
         ...data,
         proficiency: data.proficiency as 1 | 2 | 3 | 4 | 5,
       }
-      await addSong(input)
+      const newSong = await addSong(input)
+
+      // 写真がある場合は保存
+      if (pendingBlob && newSong) {
+        await songRepository.savePhoto(newSong.id, pendingBlob)
+      }
+
       navigate('/')
     } catch (err) {
       setError(err instanceof Error ? err.message : '曲の追加に失敗しました')
@@ -33,6 +49,17 @@ export function AddSongPage() {
           {error}
         </div>
       )}
+
+      <div className="mb-6">
+        <ScorePhotoUpload
+          previewUrl={previewUrl}
+          loading={photoLoading}
+          error={photoError}
+          onSelectImage={selectImage}
+          onClear={clearPreview}
+        />
+      </div>
+
       <SongForm
         tags={tags}
         onSubmit={handleSubmit}
