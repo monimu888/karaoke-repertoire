@@ -10,13 +10,7 @@ import {
   serverTimestamp,
   type Unsubscribe,
 } from 'firebase/firestore'
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-} from 'firebase/storage'
-import { db, storage } from '../lib/firebase'
+import { db } from '../lib/firebase'
 import type { Song, Tag, CreateSongInput, UpdateSongInput } from '../types'
 
 // Songs Collection
@@ -97,18 +91,9 @@ export async function updateSong(
 export async function deleteSong(
   userId: string,
   songId: string,
-  scorePhotoId?: string | null
+  _scorePhotoId?: string | null
 ): Promise<void> {
-  // Delete photo if exists
-  if (scorePhotoId) {
-    try {
-      const photoRef = ref(storage, `users/${userId}/photos/${scorePhotoId}`)
-      await deleteObject(photoRef)
-    } catch {
-      // Photo might not exist, continue
-    }
-  }
-
+  // Base64形式なのでStorage削除は不要
   const docRef = doc(songsCollection(userId), songId)
   await deleteDoc(docRef)
 }
@@ -136,38 +121,39 @@ export async function deleteTag(userId: string, tagId: string): Promise<void> {
   await deleteDoc(docRef)
 }
 
-// Photo operations
+// Photo operations - Base64保存（Firebase Storage不使用）
 export async function uploadPhoto(
   userId: string,
   songId: string,
   blob: Blob
 ): Promise<string> {
-  const photoId = `${songId}_${Date.now()}`
-  const photoRef = ref(storage, `users/${userId}/photos/${photoId}`)
+  // BlobをBase64に変換
+  const base64 = await blobToBase64(blob)
 
-  await uploadBytes(photoRef, blob)
-  const downloadUrl = await getDownloadURL(photoRef)
+  // Update song with base64 photo
+  await updateSong(userId, songId, { scorePhotoId: base64 })
 
-  // Update song with photo URL
-  await updateSong(userId, songId, { scorePhotoId: downloadUrl })
-
-  return downloadUrl
+  return base64
 }
 
 export async function deletePhoto(
   userId: string,
   songId: string,
-  photoUrl: string
+  _photoData: string
 ): Promise<void> {
-  try {
-    // Extract path from URL and delete
-    const photoRef = ref(storage, photoUrl)
-    await deleteObject(photoRef)
-  } catch {
-    // Photo might not exist
-  }
-
   await updateSong(userId, songId, { scorePhotoId: null })
+}
+
+// Helper: Blob to Base64
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      resolve(reader.result as string)
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
 }
 
 // Initialize default tags for new user
