@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Edit2, Trash2, ArrowLeft } from 'lucide-react'
 import { Button, StarRating, TagBadge, ConfirmDialog } from '../components/common'
-import { useSong, useSongs, useTags } from '../hooks'
+import { useSong, useSongs, useTags, useImageUpload } from '../hooks'
 
 export function SongDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -11,6 +11,11 @@ export function SongDetailPage() {
   const { deleteSong } = useSongs()
   const { tags } = useTags()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  const { previewUrl: photoUrl } = useImageUpload({
+    songId: song?.id,
+    existingPhotoId: song?.scorePhotoId,
+  })
 
   if (loading) {
     return (
@@ -96,6 +101,17 @@ export function SongDetailPage() {
           <div>
             <span className="text-sm text-gray-500 block mb-1">メモ</span>
             <p className="text-gray-700 whitespace-pre-wrap">{song.memo}</p>
+          </div>
+        )}
+
+        {photoUrl && (
+          <div>
+            <span className="text-sm text-gray-500 block mb-2">得点写真</span>
+            <img
+              src={photoUrl}
+              alt="得点写真"
+              className="w-full rounded-lg border border-gray-200"
+            />
           </div>
         )}
 

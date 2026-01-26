@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { SongForm } from '../components/song'
-import { useSong, useSongs, useTags } from '../hooks'
+import { SongForm, ScorePhotoUpload } from '../components/song'
+import { useSong, useSongs, useTags, useImageUpload } from '../hooks'
 import type { SongFormData } from '../utils/validation'
 
 export function EditSongPage() {
@@ -9,6 +9,20 @@ export function EditSongPage() {
   const { song, loading } = useSong(id)
   const { updateSong } = useSongs()
   const { tags } = useTags()
+
+  const {
+    previewUrl,
+    loading: photoLoading,
+    error: photoError,
+    selectImage,
+    savePhoto,
+    deletePhoto,
+    clearPreview,
+    hasPendingChanges,
+  } = useImageUpload({
+    songId: song?.id,
+    existingPhotoId: song?.scorePhotoId,
+  })
 
   if (loading) {
     return (
@@ -32,12 +46,34 @@ export function EditSongPage() {
 
   const handleSubmit = async (data: SongFormData) => {
     await updateSong(song.id, data)
+    if (hasPendingChanges) {
+      await savePhoto()
+    }
     navigate(`/song/${song.id}`)
+  }
+
+  const handleClearPhoto = async () => {
+    if (song.scorePhotoId && !hasPendingChanges) {
+      await deletePhoto()
+    } else {
+      clearPreview()
+    }
   }
 
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">曲を編集</h2>
+
+      <div className="mb-6">
+        <ScorePhotoUpload
+          previewUrl={previewUrl}
+          loading={photoLoading}
+          error={photoError}
+          onSelectImage={selectImage}
+          onClear={handleClearPhoto}
+        />
+      </div>
+
       <SongForm
         defaultValues={{
           title: song.title,
