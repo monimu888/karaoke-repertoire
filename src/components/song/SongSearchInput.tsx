@@ -24,18 +24,26 @@ export function SongSearchInput({
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isManualMode, setIsManualMode] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const isSelectingRef = useRef(false)
 
   const { results, loading, clearResults } = useItunesSearch(title)
 
-  // 外側クリックで候補を閉じる
+  // 外側クリック/タッチで候補を閉じる（選択中は除外）
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (isSelectingRef.current) {
+        return
+      }
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setShowSuggestions(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
   }, [])
 
   const handleTitleChange = (value: string) => {
@@ -49,17 +57,31 @@ export function SongSearchInput({
   }
 
   const handleSelect = (track: ItunesTrack) => {
+    isSelectingRef.current = true
     onTitleChange(track.trackName)
     onArtistChange(track.artistName)
     onSelect(track)
     setShowSuggestions(false)
     clearResults()
+    // 次のイベントループでリセット
+    setTimeout(() => {
+      isSelectingRef.current = false
+    }, 100)
   }
 
   const handleManualInput = () => {
+    isSelectingRef.current = true
     setIsManualMode(true)
     setShowSuggestions(false)
     clearResults()
+    setTimeout(() => {
+      isSelectingRef.current = false
+    }, 100)
+  }
+
+  // タッチ/クリック開始時にフラグを立てる
+  const handlePointerDown = () => {
+    isSelectingRef.current = true
   }
 
   return (
@@ -105,8 +127,10 @@ export function SongSearchInput({
                   <button
                     key={track.trackId}
                     type="button"
+                    onMouseDown={handlePointerDown}
+                    onTouchStart={handlePointerDown}
                     onClick={() => handleSelect(track)}
-                    className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                    className="w-full px-3 py-2 text-left hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
                   >
                     {track.artworkUrl100 && (
                       <img
@@ -127,8 +151,10 @@ export function SongSearchInput({
                 ))}
                 <button
                   type="button"
+                  onMouseDown={handlePointerDown}
+                  onTouchStart={handlePointerDown}
                   onClick={handleManualInput}
-                  className="w-full px-3 py-2 text-left text-indigo-600 hover:bg-indigo-50 text-sm font-medium"
+                  className="w-full px-3 py-2 text-left text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 text-sm font-medium"
                 >
                   見つからない場合は手入力 →
                 </button>
@@ -141,8 +167,10 @@ export function SongSearchInput({
                   </p>
                   <button
                     type="button"
+                    onMouseDown={handlePointerDown}
+                    onTouchStart={handlePointerDown}
                     onClick={handleManualInput}
-                    className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                    className="text-indigo-600 hover:text-indigo-800 active:text-indigo-900 text-sm font-medium"
                   >
                     手入力で登録する →
                   </button>
