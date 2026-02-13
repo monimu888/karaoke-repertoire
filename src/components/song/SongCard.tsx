@@ -66,7 +66,7 @@ export function SongCard({ song, tags }: SongCardProps) {
           <img
             src={song.scorePhotoId}
             alt="得点"
-            className="w-14 h-14 rounded object-cover flex-shrink-0 self-center"
+            className="w-28 h-28 rounded object-cover flex-shrink-0 self-center"
           />
         )}
       </div>
