@@ -2,7 +2,25 @@ const MAX_WIDTH = 1200
 const MAX_HEIGHT = 1200
 const QUALITY = 0.8
 
-export async function resizeImage(file: File): Promise<Blob> {
+const HEIC_TYPES = ['image/heic', 'image/heif']
+
+function isHeic(file: File): boolean {
+  if (HEIC_TYPES.includes(file.type)) return true
+  const ext = file.name.toLowerCase()
+  return ext.endsWith('.heic') || ext.endsWith('.heif')
+}
+
+async function convertHeicToJpeg(file: File): Promise<Blob> {
+  const { default: heic2any } = await import('heic2any')
+  const result = await heic2any({
+    blob: file,
+    toType: 'image/jpeg',
+    quality: QUALITY,
+  })
+  return Array.isArray(result) ? result[0] : result
+}
+
+function resizeBlob(blob: Blob): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image()
     const canvas = document.createElement('canvas')
@@ -28,9 +46,9 @@ export async function resizeImage(file: File): Promise<Blob> {
       ctx.drawImage(img, 0, 0, width, height)
 
       canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            resolve(blob)
+        (result) => {
+          if (result) {
+            resolve(result)
           } else {
             reject(new Error('Failed to create blob'))
           }
@@ -41,8 +59,13 @@ export async function resizeImage(file: File): Promise<Blob> {
     }
 
     img.onerror = () => reject(new Error('Failed to load image'))
-    img.src = URL.createObjectURL(file)
+    img.src = URL.createObjectURL(blob)
   })
+}
+
+export async function resizeImage(file: File): Promise<Blob> {
+  const source = isHeic(file) ? await convertHeicToJpeg(file) : file
+  return resizeBlob(source)
 }
 
 export function createObjectURL(blob: Blob): string {
