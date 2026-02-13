@@ -18,7 +18,12 @@ export function SongDetailPage() {
   const { tags } = useFirestoreTags(user?.uid)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  // Photo is now stored as URL directly in scorePhotoId
+  const songTags = useMemo(() => {
+    if (!song) return []
+    const tagIdSet = new Set(song.tags)
+    return tags.filter((tag) => tagIdSet.has(tag.id))
+  }, [song, tags])
+
   const photoUrl = song?.scorePhotoId || null
 
   if (loading) {
@@ -42,11 +47,6 @@ export function SongDetailPage() {
       </div>
     )
   }
-
-  const songTags = useMemo(() => {
-    const tagIdSet = new Set(song.tags)
-    return tags.filter((tag) => tagIdSet.has(tag.id))
-  }, [song.tags, tags])
 
   const handleDelete = async () => {
     await deleteSong(song.id, song.scorePhotoId)
