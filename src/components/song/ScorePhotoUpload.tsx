@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { Camera, X, Loader2 } from 'lucide-react'
-import { Button } from '../common'
+import { Button } from '../common/Button'
 
 interface ScorePhotoUploadProps {
   previewUrl: string | null

@@ -57,6 +57,39 @@ export function subscribeTags(
   })
 }
 
+// Subscribe to a single song with real-time updates
+export function subscribeSong(
+  userId: string,
+  songId: string,
+  callback: (song: Song | null) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
+  const docRef = doc(songsCollection(userId), songId)
+
+  return onSnapshot(
+    docRef,
+    (snapshot) => {
+      if (!snapshot.exists()) {
+        callback(null)
+        return
+      }
+
+      const data = snapshot.data()
+      callback({
+        id: snapshot.id,
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date(),
+        updatedAt: data.updatedAt?.toDate() || new Date(),
+      } as Song)
+    },
+    (error) => {
+      if (onError) {
+        onError(error)
+      }
+    }
+  )
+}
+
 // Song CRUD operations
 export async function createSong(
   userId: string,
@@ -167,7 +200,7 @@ export async function initializeDefaultTags(userId: string): Promise<void> {
     { name: '練習中', color: '#10B981' },
   ]
 
-  for (const tag of defaultTags) {
-    await addDoc(tagsCollection(userId), tag)
-  }
+  await Promise.all(
+    defaultTags.map((tag) => addDoc(tagsCollection(userId), tag))
+  )
 }

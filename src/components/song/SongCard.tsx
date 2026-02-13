@@ -1,6 +1,8 @@
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
-import { StarRating, TagBadge } from '../common'
+import { StarRating } from '../common/StarRating'
+import { TagBadge } from '../common/TagBadge'
 import type { Song, Tag } from '../../types'
 
 interface SongCardProps {
@@ -11,7 +13,10 @@ interface SongCardProps {
 export function SongCard({ song, tags }: SongCardProps) {
   const navigate = useNavigate()
 
-  const songTags = tags.filter((tag) => song.tags.includes(tag.id))
+  const songTags = useMemo(() => {
+    const tagIdSet = new Set(song.tags)
+    return tags.filter((tag) => tagIdSet.has(tag.id))
+  }, [song.tags, tags])
 
   return (
     <div

@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus, Edit2, Trash2, Check, X } from 'lucide-react'
-import { Button, Input, ConfirmDialog } from '../components/common'
-import { useFirestoreTags, useFirestoreSongs } from '../hooks'
+import { Button } from '../components/common/Button'
+import { Input } from '../components/common/Input'
+import { ConfirmDialog } from '../components/common/ConfirmDialog'
+import { useFirestoreTags } from '../hooks/useFirestoreTags'
+import { useFirestoreSongs } from '../hooks/useFirestoreSongs'
 import { useAuthContext } from '../contexts/AuthContext'
 import type { Tag } from '../types'
 
@@ -15,8 +18,18 @@ export function TagManagePage() {
   const { tags, addTag, updateTag, deleteTag } = useFirestoreTags(user?.uid)
   const { songs } = useFirestoreSongs(user?.uid)
 
+  const songsWithTagSet = useMemo(() => {
+    const tagIds = new Set<string>()
+    for (const song of songs) {
+      for (const tagId of song.tags) {
+        tagIds.add(tagId)
+      }
+    }
+    return tagIds
+  }, [songs])
+
   const isTagUsed = (tagId: string) => {
-    return songs.some((song) => song.tags.includes(tagId))
+    return songsWithTagSet.has(tagId)
   }
   const [isAdding, setIsAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)

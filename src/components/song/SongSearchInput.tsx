@@ -26,7 +26,7 @@ export function SongSearchInput({
   const containerRef = useRef<HTMLDivElement>(null)
   const isSelectingRef = useRef(false)
 
-  const { results, loading, clearResults } = useItunesSearch(title)
+  const { results, loading, error: searchError, clearResults } = useItunesSearch(title)
 
   // 外側クリック/タッチで候補を閉じる（選択中は除外）
   useEffect(() => {
@@ -162,18 +162,37 @@ export function SongSearchInput({
             ) : (
               !loading && title.length >= 2 && (
                 <div className="p-3">
-                  <p className="text-sm text-gray-500 mb-2">
-                    該当する曲が見つかりません
-                  </p>
-                  <button
-                    type="button"
-                    onMouseDown={handlePointerDown}
-                    onTouchStart={handlePointerDown}
-                    onClick={handleManualInput}
-                    className="text-indigo-600 hover:text-indigo-800 active:text-indigo-900 text-sm font-medium"
-                  >
-                    手入力で登録する →
-                  </button>
+                  {searchError ? (
+                    <>
+                      <p className="text-sm text-red-500 mb-2">
+                        検索エラー: {searchError}
+                      </p>
+                      <button
+                        type="button"
+                        onMouseDown={handlePointerDown}
+                        onTouchStart={handlePointerDown}
+                        onClick={handleManualInput}
+                        className="text-indigo-600 hover:text-indigo-800 active:text-indigo-900 text-sm font-medium"
+                      >
+                        手入力で登録する →
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-500 mb-2">
+                        該当する曲が見つかりません
+                      </p>
+                      <button
+                        type="button"
+                        onMouseDown={handlePointerDown}
+                        onTouchStart={handlePointerDown}
+                        onClick={handleManualInput}
+                        className="text-indigo-600 hover:text-indigo-800 active:text-indigo-900 text-sm font-medium"
+                      >
+                        手入力で登録する →
+                      </button>
+                    </>
+                  )}
                 </div>
               )
             )}

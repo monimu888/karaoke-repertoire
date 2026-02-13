@@ -1,5 +1,5 @@
 import { Music } from 'lucide-react'
-import { Button } from '../components/common'
+import { Button } from '../components/common/Button'
 import { useAuthContext } from '../contexts/AuthContext'
 
 export function LoginPage() {

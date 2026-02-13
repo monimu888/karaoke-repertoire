@@ -1,14 +1,26 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { Layout } from './components/layout'
+import { Layout } from './components/layout/Layout'
 import { AuthProvider, useAuthContext } from './contexts/AuthContext'
-import {
-  HomePage,
-  AddSongPage,
-  SongDetailPage,
-  EditSongPage,
-  TagManagePage,
-  LoginPage,
-} from './pages'
+import { LoginPage } from './pages/LoginPage'
+
+const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })))
+const AddSongPage = lazy(() => import('./pages/AddSongPage').then(m => ({ default: m.AddSongPage })))
+const SongDetailPage = lazy(() => import('./pages/SongDetailPage').then(m => ({ default: m.SongDetailPage })))
+const EditSongPage = lazy(() => import('./pages/EditSongPage').then(m => ({ default: m.EditSongPage })))
+const TagManagePage = lazy(() => import('./pages/TagManagePage').then(m => ({ default: m.TagManagePage })))
+
+function PageFallback() {
+  return (
+    <div className="p-4">
+      <div className="animate-pulse space-y-4">
+        <div className="h-8 bg-gray-200 rounded w-1/2" />
+        <div className="h-12 bg-gray-200 rounded" />
+        <div className="h-12 bg-gray-200 rounded" />
+      </div>
+    </div>
+  )
+}
 
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuthContext()
@@ -27,13 +39,15 @@ function AppRoutes() {
 
   return (
     <Layout>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/add" element={<AddSongPage />} />
-        <Route path="/song/:id" element={<SongDetailPage />} />
-        <Route path="/song/:id/edit" element={<EditSongPage />} />
-        <Route path="/tags" element={<TagManagePage />} />
-      </Routes>
+      <Suspense fallback={<PageFallback />}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/add" element={<AddSongPage />} />
+          <Route path="/song/:id" element={<SongDetailPage />} />
+          <Route path="/song/:id/edit" element={<EditSongPage />} />
+          <Route path="/tags" element={<TagManagePage />} />
+        </Routes>
+      </Suspense>
     </Layout>
   )
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   subscribeSongs,
+  subscribeSong,
   createSong,
   updateSong,
   deleteSong,
@@ -85,8 +86,76 @@ export function useFirestoreSongs(userId: string | undefined) {
 }
 
 export function useFirestoreSong(userId: string | undefined, songId: string | undefined) {
-  const { songs, loading } = useFirestoreSongs(userId)
-  const song = songs.find((s) => s.id === songId) || null
+  const [song, setSong] = useState<Song | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
-  return { song, loading }
+  useEffect(() => {
+    if (!userId || !songId) {
+      setSong(null)
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    const unsubscribe = subscribeSong(
+      userId,
+      songId,
+      (song) => {
+        setSong(song)
+        setLoading(false)
+      },
+      (err) => {
+        setError(err)
+        setLoading(false)
+      }
+    )
+
+    return () => unsubscribe()
+  }, [userId, songId])
+
+  return { song, loading, error }
+}
+
+export function useFirestoreSongMutations(userId: string | undefined) {
+  const editSong = useCallback(
+    async (songId: string, input: UpdateSongInput) => {
+      if (!userId) throw new Error('ログインが必要です')
+      await updateSong(userId, songId, input)
+    },
+    [userId]
+  )
+
+  const removeSong = useCallback(
+    async (songId: string, scorePhotoId?: string | null) => {
+      if (!userId) throw new Error('ログインが必要です')
+      await deleteSong(userId, songId, scorePhotoId)
+    },
+    [userId]
+  )
+
+  const savePhotoFn = useCallback(
+    async (songId: string, blob: Blob) => {
+      if (!userId) throw new Error('ログインが必要です')
+      return await uploadPhoto(userId, songId, blob)
+    },
+    [userId]
+  )
+
+  const removePhoto = useCallback(
+    async (songId: string, photoUrl: string) => {
+      if (!userId) throw new Error('ログインが必要です')
+      await deletePhoto(userId, songId, photoUrl)
+    },
+    [userId]
+  )
+
+  return {
+    updateSong: editSong,
+    deleteSong: removeSong,
+    savePhoto: savePhotoFn,
+    deletePhoto: removePhoto,
+  }
 }

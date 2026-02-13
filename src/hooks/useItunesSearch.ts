@@ -35,18 +35,33 @@ export function useItunesSearch(query: string, delay = 500) {
         limit: '10',
       })
 
-      const response = await fetch(
-        `https://itunes.apple.com/search?${params.toString()}`
-      )
+      const url = `https://itunes.apple.com/search?${params.toString()}`
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      })
 
       if (!response.ok) {
-        throw new Error('検索に失敗しました')
+        throw new Error(`HTTP ${response.status}`)
       }
 
-      const data: ItunesSearchResult = await response.json()
-      setResults(data.results)
+      const text = await response.text()
+
+      // JSONパースを試行
+      let data: ItunesSearchResult
+      try {
+        data = JSON.parse(text)
+      } catch {
+        throw new Error('レスポンス解析エラー')
+      }
+
+      setResults(data.results || [])
     } catch (err) {
-      setError(err instanceof Error ? err.message : '検索エラー')
+      const message = err instanceof Error ? err.message : '不明なエラー'
+      setError(message)
       setResults([])
     } finally {
       setLoading(false)

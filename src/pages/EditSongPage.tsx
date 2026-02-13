@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { SongForm, ScorePhotoUpload } from '../components/song'
-import { useFirestoreSongs, useFirestoreSong, useFirestoreTags } from '../hooks'
+import { SongForm } from '../components/song/SongForm'
+import { ScorePhotoUpload } from '../components/song/ScorePhotoUpload'
+import { useFirestoreSongMutations, useFirestoreSong } from '../hooks/useFirestoreSongs'
+import { useFirestoreTags } from '../hooks/useFirestoreTags'
 import { useAuthContext } from '../contexts/AuthContext'
 import { resizeImage, createObjectURL, revokeObjectURL } from '../utils/imageUtils'
 import type { SongFormData } from '../utils/validation'
@@ -12,13 +14,19 @@ export function EditSongPage() {
   const navigate = useNavigate()
   const { user } = useAuthContext()
   const { song, loading } = useFirestoreSong(user?.uid, id)
-  const { updateSong, savePhoto, deletePhoto } = useFirestoreSongs(user?.uid)
+  const { updateSong, savePhoto, deletePhoto } = useFirestoreSongMutations(user?.uid)
   const { tags } = useFirestoreTags(user?.uid)
 
-  const [previewUrl, setPreviewUrl] = useState<string | null>(song?.scorePhotoId || null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [pendingBlob, setPendingBlob] = useState<Blob | null>(null)
   const [photoLoading, setPhotoLoading] = useState(false)
   const [photoError, setPhotoError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (song?.scorePhotoId && !pendingBlob) {
+      setPreviewUrl(song.scorePhotoId)
+    }
+  }, [song?.scorePhotoId, pendingBlob])
 
   const selectImage = async (file: File) => {
     try {
@@ -26,7 +34,7 @@ export function EditSongPage() {
       setPhotoError(null)
       const resizedBlob = await resizeImage(file)
       setPendingBlob(resizedBlob)
-      if (previewUrl && !previewUrl.startsWith('http')) {
+      if (previewUrl && !previewUrl.startsWith('http') && !previewUrl.startsWith('data:')) {
         revokeObjectURL(previewUrl)
       }
       setPreviewUrl(createObjectURL(resizedBlob))
@@ -38,12 +46,20 @@ export function EditSongPage() {
   }
 
   const clearPreview = () => {
-    if (previewUrl && !previewUrl.startsWith('http')) {
+    if (previewUrl && !previewUrl.startsWith('http') && !previewUrl.startsWith('data:')) {
       revokeObjectURL(previewUrl)
     }
     setPreviewUrl(null)
     setPendingBlob(null)
   }
+
+  const handleCancel = useCallback(() => {
+    if (id) {
+      navigate(`/song/${id}`)
+    } else {
+      navigate('/')
+    }
+  }, [navigate, id])
 
   if (loading) {
     return (
@@ -113,7 +129,7 @@ export function EditSongPage() {
         }}
         tags={tags}
         onSubmit={handleSubmit}
-        onCancel={() => navigate(`/song/${song.id}`)}
+        onCancel={handleCancel}
         submitLabel="保存"
       />
     </div>

@@ -1,8 +1,12 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Edit2, Trash2, ArrowLeft } from 'lucide-react'
-import { Button, StarRating, TagBadge, ConfirmDialog } from '../components/common'
-import { useFirestoreSongs, useFirestoreSong, useFirestoreTags } from '../hooks'
+import { Button } from '../components/common/Button'
+import { StarRating } from '../components/common/StarRating'
+import { TagBadge } from '../components/common/TagBadge'
+import { ConfirmDialog } from '../components/common/ConfirmDialog'
+import { useFirestoreSongMutations, useFirestoreSong } from '../hooks/useFirestoreSongs'
+import { useFirestoreTags } from '../hooks/useFirestoreTags'
 import { useAuthContext } from '../contexts/AuthContext'
 
 export function SongDetailPage() {
@@ -10,7 +14,7 @@ export function SongDetailPage() {
   const navigate = useNavigate()
   const { user } = useAuthContext()
   const { song, loading } = useFirestoreSong(user?.uid, id)
-  const { deleteSong } = useFirestoreSongs(user?.uid)
+  const { deleteSong } = useFirestoreSongMutations(user?.uid)
   const { tags } = useFirestoreTags(user?.uid)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
@@ -39,7 +43,10 @@ export function SongDetailPage() {
     )
   }
 
-  const songTags = tags.filter((tag) => song.tags.includes(tag.id))
+  const songTags = useMemo(() => {
+    const tagIdSet = new Set(song.tags)
+    return tags.filter((tag) => tagIdSet.has(tag.id))
+  }, [song.tags, tags])
 
   const handleDelete = async () => {
     await deleteSong(song.id, song.scorePhotoId)

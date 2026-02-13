@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   subscribeTags,
   createTag,
@@ -11,7 +11,7 @@ import type { Tag } from '../types'
 export function useFirestoreTags(userId: string | undefined) {
   const [tags, setTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(true)
-  const [initialized, setInitialized] = useState(false)
+  const initializedRef = useRef(false)
 
   useEffect(() => {
     if (!userId) {
@@ -21,13 +21,13 @@ export function useFirestoreTags(userId: string | undefined) {
     }
 
     setLoading(true)
+    initializedRef.current = false
 
     const unsubscribe = subscribeTags(userId, async (tags) => {
-      // Initialize default tags if empty (first time user)
-      if (tags.length === 0 && !initialized) {
-        setInitialized(true)
+      if (tags.length === 0 && !initializedRef.current) {
+        initializedRef.current = true
         await initializeDefaultTags(userId)
-        return // Will be called again with new tags
+        return
       }
 
       setTags(tags)
@@ -35,7 +35,7 @@ export function useFirestoreTags(userId: string | undefined) {
     })
 
     return () => unsubscribe()
-  }, [userId, initialized])
+  }, [userId])
 
   const addTag = useCallback(
     async (tag: { name: string; color: string }) => {

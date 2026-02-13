@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { SongForm, ScorePhotoUpload } from '../components/song'
-import { useFirestoreSongs, useFirestoreTags, useImageUpload } from '../hooks'
+import { SongForm } from '../components/song/SongForm'
+import { ScorePhotoUpload } from '../components/song/ScorePhotoUpload'
+import { useFirestoreSongs } from '../hooks/useFirestoreSongs'
+import { useFirestoreTags } from '../hooks/useFirestoreTags'
+import { useImageUpload } from '../hooks/useImageUpload'
 import { useAuthContext } from '../contexts/AuthContext'
 import type { SongFormData } from '../utils/validation'
 import type { CreateSongInput } from '../types'
@@ -21,6 +24,8 @@ export function AddSongPage() {
     selectImage,
     clearPreview,
   } = useImageUpload()
+
+  const handleCancel = useCallback(() => navigate('/'), [navigate])
 
   const handleSubmit = async (data: SongFormData) => {
     try {
@@ -64,7 +69,7 @@ export function AddSongPage() {
       <SongForm
         tags={tags}
         onSubmit={handleSubmit}
-        onCancel={() => navigate('/')}
+        onCancel={handleCancel}
         submitLabel="追加"
       />
     </div>

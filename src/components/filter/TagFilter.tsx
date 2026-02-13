@@ -1,4 +1,4 @@
-import { TagBadge } from '../common'
+import { TagBadge } from '../common/TagBadge'
 import type { Tag } from '../../types'
 
 interface TagFilterProps {
